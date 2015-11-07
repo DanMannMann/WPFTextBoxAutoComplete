@@ -1,7 +1,7 @@
 WPFTextBoxAutoComplete
 ======================
 
-An attached behavior for WPF's TextBox control that provides auto-completion suggestions from a given collection
+An attached behavior for WPF's TextBox control that provides auto-completion suggestions from a given collection. Forked to add a strong name so it can be used in a project where strong names are required.
 
 ## How to use this library:
 
