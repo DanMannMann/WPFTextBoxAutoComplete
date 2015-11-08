@@ -40,8 +40,8 @@
     <AssemblyOriginatorKeyFile>MarsmanSigningKey.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FuzzyString, Version=1.0.0.1, Culture=neutral, PublicKeyToken=f9085a6c53abe373, processorArchitecture=MSIL">
-      <HintPath>..\..\Timekeeper\packages\FuzzyString.1.0.0.1\lib\net45\FuzzyString.dll</HintPath>
+    <Reference Include="FuzzyString, Version=1.0.0.2, Culture=neutral, PublicKeyToken=f9085a6c53abe373, processorArchitecture=MSIL">
+      <HintPath>..\packages\FuzzyString.1.0.0.2\lib\net45\FuzzyString.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="PresentationCore" />
@@ -82,13 +82,13 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\License.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\AdornedControl\AdornedControl.csproj">
       <Project>{94b81cb7-f8a6-44bc-bd71-e927f701e0d8}</Project>
       <Name>AdornedControl</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\License.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
