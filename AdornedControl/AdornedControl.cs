@@ -18,7 +18,7 @@ namespace AdornedControl
     /// A content control that allows an adorner for the content to
     /// be defined in XAML.
     /// </summary>
-    public class AdornedControl : ContentControl
+    public class AdornedControl : UserControl
     {
         #region Dependency Properties
 
@@ -48,7 +48,7 @@ namespace AdornedControl
 
         public static readonly DependencyProperty IsMouseOverShowEnabledProperty =
             DependencyProperty.Register("IsMouseOverShowEnabled", typeof(bool), typeof(AdornedControl),
-                new FrameworkPropertyMetadata(true, IsMouseOverShowEnabled_PropertyChanged));
+                new FrameworkPropertyMetadata(false, IsMouseOverShowEnabled_PropertyChanged));
 
         public static readonly DependencyProperty FadeInTimeProperty =
             DependencyProperty.Register("FadeInTime", typeof(double), typeof(AdornedControl),
@@ -88,6 +88,8 @@ namespace AdornedControl
 
             closeAdornerTimer.Tick += new EventHandler(closeAdornerTimer_Tick);
             closeAdornerTimer.Interval = TimeSpan.FromSeconds(CloseAdornerTimeOut);
+
+            UpdateAdornerDataContext();
         }
 
         /// <summary>
@@ -485,6 +487,7 @@ namespace AdornedControl
         {
             AdornedControl c = (AdornedControl)o;
             c.ShowOrHideAdornerInternal();
+            c.UpdateAdornerDataContext();
 
             FrameworkElement oldAdornerContent = (FrameworkElement)e.OldValue;
             if (oldAdornerContent != null)
