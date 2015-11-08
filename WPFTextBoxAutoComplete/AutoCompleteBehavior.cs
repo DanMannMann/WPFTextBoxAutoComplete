@@ -36,6 +36,17 @@ namespace WPFTextBoxAutoComplete
 				typeof(AutoCompleteBehavior),
 				new UIPropertyMetadata(StringComparison.Ordinal)
 			);
+        /// <summary>
+        /// The current match candidate for this textbox.
+        /// </summary>
+        public static readonly DependencyProperty CurrentAutocompleteCandidate =
+            DependencyProperty.RegisterAttached
+            (
+                "CurrentAutocompleteCandidate",
+                typeof(string),
+                typeof(AutoCompleteBehavior),
+                new UIPropertyMetadata(string.Empty)
+            );
 
 		#region Items Source
 		public static IEnumerable<String> GetAutoCompleteItemsSource(DependencyObject obj)
@@ -134,34 +145,44 @@ namespace WPFTextBoxAutoComplete
             if (String.IsNullOrEmpty(tb.Text))
                 return;
 
+            //if (((string)tb.GetValue(CurrentAutocompleteCandidate)).StartsWith(tb.Text))
+            //    return;
+
             Int32 textLength = tb.Text.Length;
+            var currentCandidate = (string)tb.GetValue(CurrentAutocompleteCandidate);
 
-			StringComparison comparer = GetAutoCompleteStringComparison(tb);
-            //Do search and changes here.
-			String match =
-			(
-				from
-					value
-				in
-				(
-					from subvalue
-					in values
-					where subvalue.Length >= textLength
-					select subvalue
-				)
-				where value.Substring(0, textLength).Equals(tb.Text, comparer)
-				select value
-			).FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(currentCandidate))
+            {
+                StringComparison comparer = GetAutoCompleteStringComparison(tb);
+                //Do search and changes here.
+                List<string> match =
+                (
+                    from
+                        value
+                    in
+                        (
+                            from subvalue
+                            in values
+                            where subvalue.Length >= textLength
+                            select subvalue
+                        )
+                    where comparer == StringComparison.CurrentCultureIgnoreCase || comparer == StringComparison.InvariantCultureIgnoreCase || comparer == StringComparison.OrdinalIgnoreCase ?
+                            value.ToLower().Contains(tb.Text.ToLower()) : value.Contains(tb.Text)
+                    select value
+                ).ToList();
 
-            //Nothing.  Leave 'em alone
-			if (String.IsNullOrEmpty(match))
-				return;
-
+                //Nothing.  Leave 'em alone
+                if (match.Count == 0)
+                    return;
+                currentCandidate = match.FirstOrDefault();
+            }
+            tb.SetValue(CurrentAutocompleteCandidate, currentCandidate);
+            var position = currentCandidate.IndexOf(tb.Text);
             tb.TextChanged -= onTextChanged;
-            tb.Text = match;
+            tb.Text = currentCandidate;
             tb.CaretIndex = textLength;
             tb.SelectionStart = textLength;
-            tb.SelectionLength = (match.Length - textLength);
+            tb.SelectionLength = (currentCandidate.Length - textLength + position);
             tb.TextChanged += onTextChanged;
         }
     }

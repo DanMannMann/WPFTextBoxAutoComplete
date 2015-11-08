@@ -5,12 +5,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("WPFTextBoxAutoComplete")]
+[assembly: AssemblyTitle("AdornedControl")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Nimgoble")]
-[assembly: AssemblyProduct("WPFTextBoxAutoComplete")]
-[assembly: AssemblyCopyright("Copyright © Nimgoble 2015")]
+[assembly: AssemblyProduct("AdornedControl")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +18,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("2a64d1f4-b9e9-438d-81a5-66f0623b8058")]
+[assembly: Guid("4ccb000b-396d-4394-a853-3899cde76f27")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -32,5 +30,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.5")]
-[assembly: AssemblyFileVersion("1.0.0.5")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
