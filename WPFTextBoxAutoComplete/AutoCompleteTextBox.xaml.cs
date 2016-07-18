@@ -40,8 +40,31 @@ namespace WPFTextBoxAutoComplete
             return GetSelector().Select(input);
         }
 
-        // Dependency Property
-        public static readonly DependencyProperty SelectorTypeProperty =
+		public double MaxDropdownHeight
+		{
+			get { return (double)GetValue(MaxDropdownHeightProperty); }
+			set { SetValue(MaxDropdownHeightProperty, value); }
+		}
+
+		// Using a DependencyProperty as the backing store for MaxDropdownHeight.  This enables animation, styling, binding, etc...
+		public static readonly DependencyProperty MaxDropdownHeightProperty =
+			DependencyProperty.Register("MaxDropdownHeight", typeof(double), typeof(AutoCompleteTextBox), new PropertyMetadata(double.MaxValue));
+
+
+		// Dependency Property
+		public static readonly DependencyProperty InternalFilterProperty =
+			 DependencyProperty.Register("InternalFilter", typeof(bool),
+			 typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(true));
+
+		// .NET Property wrapper
+		public bool InternalFilter
+		{
+			get { return (bool)GetValue(InternalFilterProperty); }
+			set { SetValue(InternalFilterProperty, value); }
+		}
+
+		// Dependency Property
+		public static readonly DependencyProperty SelectorTypeProperty =
              DependencyProperty.Register("SelectorType", typeof(Type),
              typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(null));
 
@@ -49,7 +72,7 @@ namespace WPFTextBoxAutoComplete
         public Type SelectorType
         {
             get { return (Type)GetValue(SelectorTypeProperty); }
-            set { SetValue(TextProperty, value); }
+            set { SetValue(SelectorTypeProperty, value); }
         }
 
         // Dependency Property
@@ -64,10 +87,16 @@ namespace WPFTextBoxAutoComplete
             set { SetValue(TextProperty, value); }
         }
 
-        // Dependency Property
-        public static readonly DependencyProperty SuggestionListProperty =
+		private static event EventHandler<Tuple<ObservableCollection<object>, ObservableCollection<object>>> SuggestionListChanged;
+		private static event PropertyChangedCallback UsedSuggestionChanged;
+
+		// Dependency Property
+		public static readonly DependencyProperty SuggestionListProperty =
              DependencyProperty.Register("SuggestionList", typeof(ObservableCollection<object>),
-             typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(new ObservableCollection<object>()));
+             typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(new ObservableCollection<object>(), new PropertyChangedCallback((DependencyObject sender, DependencyPropertyChangedEventArgs e) =>
+			 {
+				 SuggestionListChanged.Invoke(sender, new Tuple<ObservableCollection<object>, ObservableCollection<object>>(e.OldValue as ObservableCollection<object>, e.NewValue as ObservableCollection<object>));
+			 })));
 
         // .NET Property wrapper
         public ObservableCollection<object> SuggestionList
@@ -96,16 +125,95 @@ namespace WPFTextBoxAutoComplete
             set { SetValue(SuggestionsProperty, value); }
         }
 
-        public object UsedSuggestion { get; private set; }
+		// Dependency Property
+		public static readonly DependencyProperty UsedSuggestionProperty =
+			 DependencyProperty.Register("UsedSuggestion", typeof(object),
+			 typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(null, new PropertyChangedCallback((o,e) =>
+			 {
+				 UsedSuggestionChanged.Invoke(o, e);
+			 })));
 
-        public AutoCompleteTextBox()
+		public object UsedSuggestion
+		{
+			get { return GetValue(UsedSuggestionProperty); }
+			set { SetValue(UsedSuggestionProperty, value); }
+		}
+
+		// Dependency Property
+		public static readonly DependencyProperty SelectedItemProperty =
+			 DependencyProperty.Register("SelectedItem", typeof(object),
+			 typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(null));
+
+		public object SelectedItem
+		{
+			get { return GetValue(SelectedItemProperty); }
+			set { SetValue(SelectedItemProperty, value); }
+		}
+
+		// Dependency Property
+		public static readonly DependencyProperty QueryTextProperty =
+			 DependencyProperty.Register("QueryText", typeof(string),
+			 typeof(AutoCompleteTextBox), new FrameworkPropertyMetadata(null));
+		private string _previousText;
+
+		public string QueryText
+		{
+			get { return (string)GetValue(QueryTextProperty); }
+			set { SetValue(QueryTextProperty, value); }
+		}
+
+		public AutoCompleteTextBox()
         {
             InitializeComponent();
-        }
+			SuggestionList.CollectionChanged += suggestionsChanged;
+			SuggestionListChanged += AutoCompleteTextBox_SuggestionListChanged;
+			UsedSuggestionChanged += AutoCompleteTextBox_UsedSuggestionChanged;
+		}
 
-        public AutoCompleteTextBox(IEnumerable<string> suggestionList)
+		private void AutoCompleteTextBox_UsedSuggestionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			if (d == this)
+			{
+				//inputText.Text = UsedSuggestion == null ? string.Empty : (UsedSuggestion as Suggestion).Item;
+				
+				if (UsedSuggestion != null)
+				{
+					inputText.CaretIndex = (UsedSuggestion as Suggestion).Item.Length;
+					SelectedItem = (UsedSuggestion as Suggestion).ItemObject;
+				}
+				//Suggestions.Clear();
+				//Suggestions = Suggestions;
+			}
+		}
+
+		private void AutoCompleteTextBox_SuggestionListChanged(object sender, Tuple<ObservableCollection<object>, ObservableCollection<object>> e)
+		{
+			if (sender == this)
+			{
+				e.Item1.CollectionChanged -= suggestionsChanged;
+				e.Item2.CollectionChanged += suggestionsChanged;
+				UpdateSuggestions();
+			}
+		}
+
+		private void suggestionsChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			UpdateSuggestions();
+		}
+
+		private void UpdateSuggestions()
+		{
+			if (!InternalFilter)
+			{
+				var suggestions = new ObservableCollection<Suggestion>();
+				var currentItem = GetCurrent();
+				SuggestionList.ForEach(x => suggestions.Add(new Suggestion() { Item = Select(x), ItemObject = x, Selected = (currentItem == null ? string.Empty : currentItem.Item) == Select(x) }));
+				SetValue(SuggestionsProperty, suggestions);
+			}
+		}
+
+		public AutoCompleteTextBox(IEnumerable<string> suggestionList) : this()
         {
-            InitializeComponent();
             SuggestionList.Clear();
             foreach(var x in suggestionList)
             {
@@ -115,24 +223,35 @@ namespace WPFTextBoxAutoComplete
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            var candidates = SuggestionList.Where(x => Select(x).ApproximatelyEquals((sender as TextBox).Text, FuzzyStringComparisonTolerance.Strong,
-                FuzzyStringComparisonOptions.UseLongestCommonSubstring,
-                FuzzyStringComparisonOptions.UseLongestCommonSubsequence))
-                .OrderByDescending(x => Select(x).LongestCommonSubsequence((sender as TextBox).Text).Length + Select(x).LongestCommonSubstring((sender as TextBox).Text).Length)
-                .ToList();
-            var suggestions = new ObservableCollection<Suggestion>();
-            var current = GetCurrent();
-            var currentItem = current == null ? string.Empty : current.Item;
-            candidates.ForEach(x => suggestions.Add(new Suggestion() { Item = Select(x), Selected = currentItem == Select(x) }));
-            SetValue(SuggestionsProperty, suggestions); 
+			QueryText = inputText.Text;
+			if (InternalFilter && _previousText != inputText.Text && (UsedSuggestion as Suggestion)?.Item != inputText.Text)
+			{
+				_previousText = inputText.Text;
+				var candidates = SuggestionList.Where(x => Select(x).ApproximatelyEquals((sender as TextBox).Text, FuzzyStringComparisonTolerance.Strong,
+					FuzzyStringComparisonOptions.UseLongestCommonSubstring,
+					FuzzyStringComparisonOptions.UseLongestCommonSubsequence))
+					.OrderByDescending(x => Select(x).LongestCommonSubsequence((sender as TextBox).Text).Length + Select(x).LongestCommonSubstring((sender as TextBox).Text).Length)
+					.ToList();
+				var suggestions = new ObservableCollection<Suggestion>();
+				var current = GetCurrent();
+				var currentItem = current == null ? string.Empty : current.Item;
+
+				candidates.ForEach(x => suggestions.Add(new Suggestion() { Item = Select(x), ItemObject = x, Selected = (current == null ? string.Empty : current.Item) == Select(x) }));
+				UsedSuggestion = suggestions.SingleOrDefault(x => x.Selected);
+				if ((UsedSuggestion as Suggestion)?.ItemObject != null)
+				{
+					SelectedItem = (UsedSuggestion as Suggestion).ItemObject;
+				}
+				SetValue(SuggestionsProperty, suggestions);
+			}
         }
 
         private void TextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Escape || e.Key == Key.Tab)
             {
-                Suggestions.Clear();
-                Suggestions = Suggestions;
+                //Suggestions.Clear();
+                //Suggestions = Suggestions;
                 return;
             }
 
@@ -145,15 +264,18 @@ namespace WPFTextBoxAutoComplete
 
             if (e.Key == Key.Enter)
             {
-                if (current != null)
-                {
-                    inputText.Text = current.Item;
-                    UsedSuggestion = current.ItemObject;
-                    inputText.CaretIndex = inputText.Text.Length;
-                }
-                Suggestions.Clear();
-                Suggestions = Suggestions;
-                return;
+				if (current != null)
+				{
+					UsedSuggestion = current;
+					//inputText.Text = current.Item;
+					//UsedSuggestion = current.ItemObject;
+					
+				}
+				//Suggestions.Clear();
+				//Suggestions = Suggestions;
+				TraversalRequest request = new TraversalRequest(FocusNavigationDirection.Next);
+				inputText.MoveFocus(request);
+				return;
             }
 
             if (e.Key == Key.Up || e.Key == Key.Down)
@@ -193,13 +315,18 @@ namespace WPFTextBoxAutoComplete
 
         private void AdornedControl_LostFocus(object sender, RoutedEventArgs e)
         {
-            Suggestions.Clear();
-            Suggestions = Suggestions;
-        }
+			if (UsedSuggestion == null)
+			{
+				//inputText.Text = string.Empty;
+			}
+            //Suggestions = Suggestions;
+			SuggGrid.Visibility = Visibility.Hidden;
+		}
 
         private void AdornedControl_GotFocus(object sender, RoutedEventArgs e)
         {
-            inputText.Focus();
+			SuggGrid.Visibility = Visibility.Visible;
+			inputText.Focus();
         }
 
         private void AdornedControl_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
@@ -207,31 +334,14 @@ namespace WPFTextBoxAutoComplete
             Keyboard.Focus(inputText);
         }
 
-        private void TextBlock_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ClickCount == 1)
-            {
-                var index = Suggestions.IndexOf(Suggestions.FirstOrDefault(x => x.Item == (sender as TextBlock).Text));
-                Suggestions.ForEach(x => x.Selected = false);
-                Suggestions[index].Selected = true;
-            }
-            else if (e.ClickCount == 2)
-            {
-                inputText.Text = (sender as TextBlock).Text;
-                inputText.CaretIndex = inputText.Text.Length;
-                Suggestions.Clear();
-                Suggestions = Suggestions;
-            }
-        }
-
         private void AdornedControl_Loaded(object sender, RoutedEventArgs e)
         {
-            Suggestions.Clear();
-            Suggestions = Suggestions;
+            //Suggestions.Clear();
+            //Suggestions = Suggestions;
         }
-    }
+	}
 
-    public class Suggestion : INotifyPropertyChanged
+	public class Suggestion : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
         private string _item;

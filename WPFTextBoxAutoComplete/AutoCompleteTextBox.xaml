@@ -6,60 +6,61 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d" 
+			 x:Name="MainControl"
              d:DesignHeight="25" d:DesignWidth="150" Height="25" IsAdornerVisible="True" VerticalAdornerPlacement="Outside"
              DataContext="{Binding RelativeSource={RelativeSource Self}}" LostFocus="AdornedControl_LostFocus" GotKeyboardFocus="AdornedControl_GotKeyboardFocus" GotFocus="AdornedControl_GotFocus" IsTabStop="False" Focusable="True" Loaded="AdornedControl_Loaded">
     <ac:AdornedControl.AdornerContent>
-        <Canvas Opacity="0.9" Width="{Binding Path=Width}" VerticalAlignment="Bottom">
-            <ItemsControl ItemsSource="{Binding Path=Suggestions, Mode=OneWay}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical" Background="White" Width="{Binding Path=Width}" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Path=Item}" MouseDown="TextBlock_MouseDown">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=Selected}" Value="True">
-                                            <DataTrigger.Setters>
-                                                <Setter Property="Background">
-                                                    <Setter.Value>
-                                                        <SolidColorBrush Color="Navy" />
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Setter Property="Foreground">
-                                                    <Setter.Value>
-                                                        <SolidColorBrush Color="White" />
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </DataTrigger.Setters>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Path=Selected}" Value="False">
-                                            <DataTrigger.Setters>
-                                                <Setter Property="Background">
-                                                    <Setter.Value>
-                                                        <SolidColorBrush Color="White" />
-                                                    </Setter.Value>
-                                                </Setter>
-                                                <Setter Property="Foreground">
-                                                    <Setter.Value>
-                                                        <SolidColorBrush Color="Black" />
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </DataTrigger.Setters>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </Canvas>
+		<Grid Visibility="Hidden" Width="{Binding Path=Width}" VerticalAlignment="Bottom" Name="SuggGrid">
+			<ListBox Name="SuggListBox" SelectedItem="{Binding UsedSuggestion, Mode=TwoWay}" MaxHeight="{Binding Path=MaxDropdownHeight}" ItemsSource="{Binding Path=Suggestions, Mode=TwoWay}" ScrollViewer.VerticalScrollBarVisibility="Auto" Width="{Binding Path=Width}">
+				<!--<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<StackPanel Orientation="Vertical" Background="White" Width="{Binding Path=Width}" Height="auto"  />
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>-->
+				<ListBox.ItemTemplate>
+					<DataTemplate>
+						<Grid Background="AliceBlue">
+							<TextBlock Text="{Binding Path=Item}">
+								<TextBlock.Style>
+									<Style TargetType="TextBlock">
+										<Style.Triggers>
+											<DataTrigger Binding="{Binding Path=Selected}" Value="True">
+												<DataTrigger.Setters>
+													<Setter Property="Background">
+														<Setter.Value>
+															<SolidColorBrush Color="Navy" />
+														</Setter.Value>
+													</Setter>
+													<Setter Property="Foreground">
+														<Setter.Value>
+															<SolidColorBrush Color="White" />
+														</Setter.Value>
+													</Setter>
+												</DataTrigger.Setters>
+											</DataTrigger>
+											<DataTrigger Binding="{Binding Path=Selected}" Value="False">
+												<DataTrigger.Setters>
+													<Setter Property="Background">
+														<Setter.Value>
+															<SolidColorBrush Color="White" />
+														</Setter.Value>
+													</Setter>
+													<Setter Property="Foreground">
+														<Setter.Value>
+															<SolidColorBrush Color="Black" />
+														</Setter.Value>
+													</Setter>
+												</DataTrigger.Setters>
+											</DataTrigger>
+										</Style.Triggers>
+									</Style>
+								</TextBlock.Style>
+							</TextBlock>
+						</Grid>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+		</Grid>
     </ac:AdornedControl.AdornerContent>
-    <Grid>
-        <TextBox IsTabStop="True" TabIndex="{Binding Path=TabIndex}" TextChanged="TextBox_TextChanged" Name="inputText" Height="{Binding Path=Height}" KeyUp="TextBox_KeyUp" Text="{Binding Text, Mode=TwoWay}" /> 
-    </Grid>
+	<TextBox IsTabStop="True" TabIndex="{Binding Path=TabIndex}" TextChanged="TextBox_TextChanged" Name="inputText" Height="{Binding Path=Height}" KeyUp="TextBox_KeyUp" Text="{Binding Path=UsedSuggestion.Item, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
 </ac:AdornedControl>

@@ -4,7 +4,7 @@ namespace WPFTextBoxAutoComplete
     {
         public string Select(object input)
         {
-            return (string)input;
+            return input.ToString();
         }
     }
 }

@@ -602,8 +602,7 @@ namespace AdornedControl
                                                                this.HorizontalAdornerPlacement, this.VerticalAdornerPlacement,
                                                                this.AdornerOffsetX, this.AdornerOffsetY);
                     this.adornerLayer.Add(this.adorner);
-
-                    UpdateAdornerDataContext();
+					UpdateAdornerDataContext();
                 }
             }
 
